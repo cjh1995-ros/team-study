@@ -2,7 +2,7 @@
 #include "gui/cv_gui.h"
 
 int main() {
-  gui::OpticalFlowDebuggingApp app("path/to/video");
+  gui::OpticalFlowDebuggingApp app("../data/paris");
   app.Run();
   return 0;
 }

@@ -6,35 +6,27 @@
 #include <vector>
 
 #include "cvui.h"
+#include "optical_flow/optical_flow_estimator.h"
 
 namespace gui {
-
-struct Location {
-  int x;
-  int y;
-};
-
-struct GUIContent {
-  std::string text;
-  Location location;
-};
 
 /// @brief Basic class which wraps GUI functionalities
 class OpticalFlowDebuggingApp {
  public:
   OpticalFlowDebuggingApp(const std::string& video_path) {
-    curr_frame_id_ = 0;
-
     window_name_ = "Optical Flow Debugging";
     trackbar_name_ = "Frame";
     continue_checkbox_name_ = "continue";
+    continue_play_ = false;
     quit_button_name_ = "quit";
+    is_quit_ = false;
     next_button_name_ = "next";
     prev_button_name_ = "prev";
+    curr_frame_id_ = 0;
+    scale_factor_ = 0.5;
 
-    // tmp window size
-    window_size_ = cv::Size(800, 600);
-    // ReadImagesFromPath(video_path);
+    gui_window_size_ = cv::Size(150, 250);
+    ReadImagesFromPath(video_path);
     InitGUI();
   }
 
@@ -43,11 +35,18 @@ class OpticalFlowDebuggingApp {
   cv::Mat GetCurrImage() const noexcept {
     return all_images_.at(curr_frame_id_);
   }
+  bool IsCurrOutOfRange() const noexcept {
+    return curr_frame_id_ >= n_total_frames_ - 1 || curr_frame_id_ < 0;
+  }
   cv::Mat GetPrevImage() const noexcept {
     return all_images_.at(curr_frame_id_ - 1);
   }
+  bool IsPrevOutOfRange() const noexcept { return curr_frame_id_ - 1 < 0; }
   cv::Mat GetNextImage() const noexcept {
     return all_images_.at(curr_frame_id_ + 1);
+  }
+  bool IsNextOutOfRange() const noexcept {
+    return curr_frame_id_ >= n_total_frames_;
   }
 
  private:
@@ -57,20 +56,18 @@ class OpticalFlowDebuggingApp {
   void ReadImagesFromPath(const std::string& video_path) noexcept;
   void InitGUI() noexcept;
 
-  //   void RunOpticalFlow(const cv::Mat& prev, const cv::Mat& next,
-  //                       const cv::Mat& prev_flow, cv::Mat& next_flow)
-  //                       noexcept;
-
   /// @brief All images.
   std::vector<cv::Mat> all_images_;
+  cv::Size image_size_;
+  double scale_factor_;
+  int n_total_frames_;
+
+  /// @brief Optical flow estimator
+  std::shared_ptr<vision::OpticalFlowEstimator> optical_flow_estimator_;
 
   /// @brief cursor for visualizing
   int curr_frame_id_;
-
-  /// @brief total frame number
-  int n_total_frames_;
-
-  bool continue_play_;
+  cv::Mat curr_image_, prev_image_, next_image_;
 
   /// @brief GUI infos
   std::string trackbar_name_;
@@ -79,14 +76,17 @@ class OpticalFlowDebuggingApp {
   int trackbar_width_;
 
   std::string continue_checkbox_name_;
-  bool continue_;
+  bool continue_play_;
 
   std::string quit_button_name_;
+  bool is_quit_;
+
   std::string next_button_name_;
   std::string prev_button_name_;
 
   std::string window_name_;
-  // cv::Mat window_;
+  cv::Size gui_window_size_;
+
   cv::Size window_size_;
 };
 }  // namespace gui
